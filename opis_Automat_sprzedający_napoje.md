@@ -1,6 +1,6 @@
 link do github-a : https://github.com/CZOLGOWUS/JS_Project_Automat_Sprzedajacy_napoje
 
-Opis zadania
+Opis zadania 3
 
 o  Automat przechowuje informacje o monetach znajdujących się w nim (1, 2, 5,
 10, 20, 50gr, 1, 2, 5 zł)
