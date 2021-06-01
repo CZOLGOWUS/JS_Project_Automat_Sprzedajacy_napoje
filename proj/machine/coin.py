@@ -2,6 +2,9 @@ from dataclasses import dataclass, field
 
 from decimal import *
 
+import decimal
+
+
 @dataclass(frozen=True, order=True)
 class Coin:
     """
@@ -13,8 +16,14 @@ class Coin:
 
 
     def __post_init__(self):
-        if self.value not in {0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5}:
+        if self.value not in {Decimal('0.01'), Decimal('0.02'), Decimal('0.05'), Decimal('0.1'), Decimal('0.2'), Decimal('0.5'), Decimal('1'), Decimal('2'), Decimal('5')}:
             raise AttributeError("value of a coin must be one of : 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5")
+
+    def __add__(self, other):
+        if self.currency == other.currency:
+            return self.value+other.value
+        else:
+            raise Exception("currency difference")
 
 
     def __str__(self):

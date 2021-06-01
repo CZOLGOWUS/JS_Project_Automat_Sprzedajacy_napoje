@@ -1,11 +1,16 @@
 from dataclasses import dataclass, field
 
+import decimal
+
 from machine.exceptions import *
+
 
 @dataclass(order=True)
 class coinStore:
-    currency: str = field()
-    values: list = field()
+    values: list = field(default_factory=list)
+    currency: str = field(default="PLN")
+
+
 
     def add(self,coin):
         if coin.currency == self.currency:
