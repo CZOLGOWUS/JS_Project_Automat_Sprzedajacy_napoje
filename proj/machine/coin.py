@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from decimal import *
+from decimal import Decimal
 
 import decimal
 
@@ -28,4 +28,3 @@ class Coin:
 
     def __str__(self):
         return "{currency : " + str(self.currency) + ", value : " + str(self.value)
-

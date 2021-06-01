@@ -1,17 +1,7 @@
-import decimal
-import inspect
-from pprint import pprint
-from machine.coin import *
 from machine.machine import *
 
-import math
 import random
-
 import tkinter as tk
-
-# tests
-from machine.exceptions import *
-
 
 
 eq = [[iid + random.randint(10, 200),
@@ -37,19 +27,19 @@ keyW = 14
 #0 button
 keyboard = [tk.Button(root, textvariable=tk.StringVar(root, "0"), bg="grey", fg="white", height=keyH, width=keyW,
                       command=lambda: drinkMachine.keyboardInputHandler(0,screenLabel))]
-keyboard[0].grid(columnspan=1, rowspan=1, column=6, row=4, sticky="NSEW")
+keyboard[0].grid(columnspan=1, rowspan=1, column=14, row=4, sticky="NSEW")
 
 #1-9 buttons
 for i in range(1, 10):
     keyboard.append(
         tk.Button(root, textvariable=tk.StringVar(root, str(i)), bg="grey", fg="white", height=keyH, width=keyW,
                   command=lambda arg=i: drinkMachine.keyboardInputHandler(arg,screenLabel)))
-    keyboard[i].grid(columnspan=1, rowspan=1, column=(i - 1) % 3 + 5, row=(i - 1) // 3, sticky="NSEW")
+    keyboard[i].grid(columnspan=1, rowspan=1, column=(i - 1) % 3 + 13, row=(i - 1) // 3, sticky="NSEW")
 
 #Cancel "C"
 keyboard.append(tk.Button(root, textvariable=tk.StringVar(root, "C"), bg="grey", fg="white", height=keyH, width=keyW,
                           command=lambda: drinkMachine.transactionCancelled(screenLabel)))
-keyboard[10].grid(columnspan=1, rowspan=1, column=5, row=4, sticky="NSEW")
+keyboard[10].grid(columnspan=1, rowspan=1, column=13, row=4, sticky="NSEW")
 
 # BUTTONS
 # BUY
@@ -69,7 +59,6 @@ coins = [Coin(Decimal('0.01'),"PLN"), Coin(Decimal('0.02'),"PLN"), Coin(Decimal(
          Coin(Decimal('0.1'),"PLN"), Coin(Decimal('0.2'),"PLN"), Coin(Decimal('0.5'),"PLN"),
          Coin(Decimal('1'),"PLN"),Coin(Decimal('2'),"PLN"),Coin(Decimal('5'),"PLN")]
 
-print
 
 for i in range(len(coins)):
     coinsBtn.append(

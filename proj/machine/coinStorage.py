@@ -26,6 +26,4 @@ class coinStore:
         if len(self.values) == 0:
             self.currency = currency
         else:
-            raise CoinStoreIsNotEmptyException("Storage is not empty")
-
-
+            raise ItemNotAvailableException("Storage is not empty")

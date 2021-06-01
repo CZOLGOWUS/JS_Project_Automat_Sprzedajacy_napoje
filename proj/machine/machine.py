@@ -1,8 +1,5 @@
-import copy
-
 from machine.coin import Coin
-from machine.coinStorage import *
-from machine.exceptions import *
+from machine.coinStorage import coinStore
 
 from decimal import Decimal
 from tkinter import Label as Label
