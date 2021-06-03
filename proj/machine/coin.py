@@ -2,8 +2,6 @@ from dataclasses import dataclass, field
 
 from decimal import Decimal
 
-import decimal
-
 
 @dataclass(frozen=True, order=True)
 class Coin:
