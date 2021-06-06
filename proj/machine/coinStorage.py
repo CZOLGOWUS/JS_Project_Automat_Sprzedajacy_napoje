@@ -1,5 +1,13 @@
 from dataclasses import dataclass, field
 
+from decimal import Decimal
+
+from machine.coin import Coin
+
+possibleCoins = [Coin(Decimal('0.01'), "PLN"), Coin(Decimal('0.02'), "PLN"), Coin(Decimal('0.05'), "PLN"),
+                 Coin(Decimal('0.10'), "PLN"), Coin(Decimal('0.20'), "PLN"), Coin(Decimal('0.50'), "PLN"),
+                 Coin(Decimal('1.00'), "PLN"), Coin(Decimal('2.00'), "PLN"), Coin(Decimal('5.00'), "PLN")]
+
 
 @dataclass(order=True)
 class coinStore:

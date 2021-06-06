@@ -1,24 +1,12 @@
 from machine.coin import Coin
-from machine.coinStorage import coinStore
+from machine.coinStorage import coinStore,possibleCoins
 
 from decimal import Decimal
 from tkinter import Label as Label
 
-from copy import deepcopy
+from copy import copy
 
-
-def convertDecimalToListOfCoins(dec: Decimal):
-    coinsToReturn = []
-    availableCoins = [Decimal('0.01'), Decimal('0.02'), Decimal('0.05'), Decimal('0.1'), Decimal('0.2'),
-                      Decimal('0.5'), Decimal('1'), Decimal('2'), Decimal('5')]
-    availableCoins.reverse()
-
-    for i in availableCoins:
-        while dec >= i:
-            coinsToReturn.append(i)
-            dec -= i
-
-    return coinsToReturn
+from tkinter import messagebox
 
 
 class machine(coinStore):
@@ -28,15 +16,19 @@ class machine(coinStore):
     price => price of the product in 0.01 of the currency(for example if price = 159 tha means it is 1.59 of the currency)
     name => name of the product
     countOfTheProduct => how many items left
+    currency => currency of coins used in machine
+    change => list of coins in the machine on start for returning change
     """
 
-    def __init__(self, eq: list, currency):
+    def __init__(self, eq: list, currency, change: list):
         super().__init__(currency=currency)
         self.cancelled = False
         self.digitsPicked: list[int] = []
         self.price = Decimal('0.00')
         self.isBuying = False
         self.indexEq = None
+        self.insertedCoins = list()
+        self.values = change
 
         if not isinstance(eq, list) and len(eq) != 20:
             raise AttributeError("parameter \"eq\" must of type list of lists [[],[],[]...]")
@@ -47,6 +39,9 @@ class machine(coinStore):
 
     def __str__(self):
         return str(self.eq)
+
+    def repr_item(self,numberOfItem:int):
+        return "[ id : "+str(self.eq[numberOfItem-30][0])+" | price : "+str(self.eq[numberOfItem-30][1])+" | name : "+str(self.eq[numberOfItem-30][2])+" | count : "+str(self.eq[numberOfItem-30][3])+" ]"
 
     def changeItemInEq(self, numberOfItem, itemId, price, name, count):
         self.eq[numberOfItem] = [itemId, price, name, count]
@@ -59,8 +54,9 @@ class machine(coinStore):
 
     def dispenseItem(self):
         self.eq[self.indexEq][3] -= 1
-        self.isBuying = False
-        print("dispensing " + self.eq[self.indexEq][2], self.eq[self.indexEq][3], "items left")
+        messagebox.showinfo("dispensing",
+                            "dispensing item : " + self.eq[self.indexEq][2] + ", number of items left : " +
+                            str(self.eq[self.indexEq][3]))
 
     def enterDigit(self, digit):
         if len(self.digitsPicked) == 0:
@@ -91,22 +87,8 @@ class machine(coinStore):
         else:
             raise Exception("unknown exception")
 
-    def resetAction(self, label: Label):
-        if len(self.digitsPicked) > 0:
-            self.digitsPicked.clear()
-        if self.cancelled:
-            self.returnInputtedCoins()
-        self.price = Decimal('0.00')
-
-        self.displayDigits(label)
-        self.isBuying = False
-        self.indexEq = None
-        self.cancelled = False
-
-    def transactionCancelled(self,label:Label):
-        self.cancelled = True
-        self.resetAction(label)
-
+    def displayAmountToPay(self, label: Label):
+        label.config(text=str(self.price))
 
     def displayPrice(self, label: Label):
         if len(self.digitsPicked) < 2 or self.indexEq is None:
@@ -122,7 +104,6 @@ class machine(coinStore):
             return
         elif len(self.digitsPicked) == 2:
             label.config(text=str(self.eq[self.indexEq][1]))
-            self.digitsPicked.clear()
 
     def buy(self, label: Label):
         if len(self.digitsPicked) < 2 or self.indexEq is None:
@@ -131,12 +112,14 @@ class machine(coinStore):
 
         if self.indexEq < 0 or self.indexEq > 20:
             label.config(text="N/A")
+            self.resetAction(label)
             return
 
         if self.eq[self.indexEq][3] <= 0:
-            print("item on this number has been bought up.")
+            label.config(text="N/A")
+            messagebox.showerror("N/A"," item on this number has been bought up.")
+            self.resetAction(label)
             return
-
 
         if len(self.digitsPicked) == 2:
             self.displayPrice(label)
@@ -145,41 +128,99 @@ class machine(coinStore):
         else:
             return
 
-    def displayAmountToPay(self, label: Label):
-        label.config(text=str(self.price))
+    def resetAction(self, label: Label):
+        if len(self.digitsPicked) > 0:
+            self.digitsPicked.clear()
 
-    def returnChange(self):
-        print("[FLOAT]returning :", abs(self.price))
-        return self.price
+        self.returnInputtedCoinsIfCanceled()
+        self.price = Decimal('0.00')
 
-    def returnInputtedCoins(self):
-        print("[TRANSACTION_CANCELED] returning :",self.values)
-        if self.values:
-            self.values.clear()
+        self.displayDigits(label)
+        self.isBuying = False
+        self.indexEq = None
+        self.cancelled = False
+
+    def finishTransaction(self, label: Label):
+
+
+        coinsToReturn = self.returnChangeInCoins()
+
+        if coinsToReturn:
+            if isinstance(coinsToReturn[0],Coin):
+                messagebox.showinfo("returning", "coins returned:  " + str([float(i.value) for i in coinsToReturn]) )
+            else:
+                messagebox.showinfo("returning", "coins returned:  None")
+            self.values += self.insertedCoins
+            self.insertedCoins.clear()
+            self.dispenseItem()
+
+            self.digitsPicked.clear()
+            self.price = Decimal('0.00')
+
+        else:
+            messagebox.showerror("could not return change", "only exact price")
+            messagebox.showinfo("returning :","coins returned : [" + str([float(i.value) for i in self.insertedCoins]) + "]")
+            self.insertedCoins.clear()
+
+        self.displayDigits(label)
+        self.isBuying = False
+        self.indexEq = None
+        self.cancelled = False
+
+        return
+
+    def returnInputtedCoinsIfCanceled(self):
+        messagebox.showinfo("[TRANSACTION_CANCELED]",
+                            "\tcoins returned :" + str([float(i.value) for i in self.insertedCoins]))
+        if self.insertedCoins:
+            self.insertedCoins.clear()
 
     def inputCoin(self, coin: Coin, label: Label):
         if self.isBuying and self.indexEq is not None:
             self.price -= coin.value
-            self.values.append(deepcopy(coin))
+            self.insertedCoins.append(copy(coin))
             self.displayAmountToPay(label)
 
-            if self.price == 0:
-                self.dispenseItem()
-                self.resetAction(label)
-            elif self.price < 0:
-                self.dispenseItem()
-                self.returnChangeInCoins()
-                self.resetAction(label)
-            else:
-                self.displayAmountToPay(label)
+            if self.price <= 0:
+                self.finishTransaction(label)
         else:
-            print("no item selected")
+            messagebox.showinfo("no input,", "no item selected")
             return
 
     def returnChangeInCoins(self):
         if self.price < 0:
             change = abs(self.price)
+            returnCoins = self.convertDecimalToListOfCoins(change)
         else:
-            return Decimal('0.00')
+            return [Decimal("0.00")]
 
-        print("[TRANSACTION_FINISHED]returning :",convertDecimalToListOfCoins(change))
+        return returnCoins
+
+    def convertDecimalToListOfCoins(self, dec: Decimal):
+        coinsToReturnV = []
+        coinsToReturnI = []
+        inserted = copy(self.insertedCoins)
+
+        for i in possibleCoins:
+            if dec > 0:
+                while dec >= i.value:
+                    #print([float(i.value) for i in self.values])
+                    if i in self.values:
+                        self.values.remove(i)
+                        coinsToReturnV.append(i)
+                        dec -= i.value
+                    elif i in inserted:
+                        inserted.remove(i)
+                        coinsToReturnI.append(i)
+                        dec -= i.value
+                    else:
+                        break
+            else:
+                break
+
+        if dec != 0:
+            self.values += coinsToReturnV
+            self.insertedCoins += coinsToReturnI
+            return False
+
+        return coinsToReturnV+coinsToReturnI
